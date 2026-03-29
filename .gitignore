@@ -6,3 +6,5 @@ __pycache__/
 .pytest_cache/
 __pycache__/
 *.pyc
+
+.adk/
