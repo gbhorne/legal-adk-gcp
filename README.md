@@ -207,3 +207,9 @@ See the companion repo [langgraph-legal-assistant](https://github.com/gbhorne/la
 *Built by Gregory Horne - Cloud Architect and GCP AI/ML Platform Engineer*
 
 *All outputs from this system require review by a licensed attorney before use. This system does not provide legal advice.*
+
+---
+
+## Experimental disclaimer
+
+This project is experimental software intended for portfolio demonstration and research purposes only. It has not been validated for production legal use. All outputs require review by a licensed attorney before use in any legal matter. Outputs from this system do not constitute legal advice and do not create an attorney-client relationship. The authors assume no liability for any use of or reliance on system outputs. This project is not affiliated with or endorsed by any bar association, law firm, or legal technology certification body.
