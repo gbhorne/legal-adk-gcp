@@ -1,0 +1,31 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+class Config:
+    PROJECT_ID:              str  = os.getenv("GCP_PROJECT_ID",                "legal-adk")
+    REGION:                  str  = os.getenv("GCP_REGION",                    "us-central1")
+    CORPUS_BUCKET_RAW:       str  = os.getenv("GCS_CORPUS_BUCKET_RAW",         "legal-adk-corpus-raw")
+    CORPUS_BUCKET_PROCESSED: str  = os.getenv("GCS_CORPUS_BUCKET_PROCESSED",   "legal-adk-corpus-processed")
+    SEARCH_LOCATION:         str  = os.getenv("VERTEX_SEARCH_LOCATION",        "us")
+    SEARCH_DATASTORE_ID:     str  = os.getenv("VERTEX_SEARCH_DATASTORE_ID",    "legal-search-shared_1774804330209_gcs_store")
+    SEARCH_ENGINE_ID:        str  = os.getenv("SEARCH_ENGINE_ID",              "legal-search-app_1774806682231")
+    SEARCH_SERVING_CONFIG:   str  = (
+        "projects/1073947050575/locations/us"
+        "/collections/default_collection"
+        "/engines/legal-search-app_1774806682231"
+        "/servingConfigs/default_serving_config"
+    )
+    COURTLISTENER_TOKEN:     str  = os.getenv("COURTLISTENER_TOKEN",           "")
+    COURTLISTENER_BASE_URL:  str  = os.getenv("COURTLISTENER_BASE_URL",        "https://www.courtlistener.com/api/rest/v4")
+    GEMINI_MODEL:            str  = os.getenv("GEMINI_MODEL",                  "gemini-2.0-flash-001")
+    GEMINI_LOCATION:         str  = os.getenv("GEMINI_LOCATION",               "us-central1")
+    INGEST_JURISDICTIONS:    list = os.getenv("INGEST_JURISDICTIONS",          "ga").split(",")
+    CHUNK_SIZE_CHARS:        int  = int(os.getenv("CHUNK_SIZE_CHARS",          "2000"))
+    CHUNK_OVERLAP_CHARS:     int  = int(os.getenv("CHUNK_OVERLAP_CHARS",       "256"))
+    MIN_CHUNK_CHARS:         int  = int(os.getenv("MIN_CHUNK_CHARS",           "150"))
+    LOCAL_DEV:               bool = os.getenv("LOCAL_DEV", "false").lower() == "true"
+
+config = Config()
+
