@@ -39,29 +39,8 @@ Provide contract type, jurisdiction, and party names, get back:
 - List of items requiring attorney review before use
 
 **Supported contract types:** NDA, Employment Agreement, Commercial Lease, Asset Purchase Agreement
-
----
-
 ## Architecture
-`
-Attorney request
-      |
-      v
-FastAPI (Cloud Run)
-      |
-      v
-ADK Orchestrator (legal_orchestrator)
-  |-- ReviewAgent  --> analyze_contract() --> RAG --> Gemini --> ContractRiskReport
-  |-- ResearchAgent --> legal_research()  --> RAG --> Gemini --> LegalResearchMemo
-  +-- DraftAgent   --> draft_document()  --> RAG --> Gemini --> DraftedDocument
-                                               |
-                                         Vertex AI Search
-                                         (1,010+ GA opinions
-                                          + clause library)
-                                               |
-                                         CourtListener API
-                                         (nightly Cloud Run job)
-`
+![adk-legal-assistant architecture](architecture.svg)
 
 **Compliance by design:**
 - Cloud DLP tokenizes PII before every LLM call
@@ -213,3 +192,5 @@ See the companion repo [langgraph-legal-assistant](https://github.com/gbhorne/la
 ## Experimental disclaimer
 
 This project is experimental software intended for portfolio demonstration and research purposes only. It has not been validated for production legal use. All outputs require review by a licensed attorney before use in any legal matter. Outputs from this system do not constitute legal advice and do not create an attorney-client relationship. The authors assume no liability for any use of or reliance on system outputs. This project is not affiliated with or endorsed by any bar association, law firm, or legal technology certification body.
+
+
