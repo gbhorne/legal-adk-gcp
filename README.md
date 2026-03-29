@@ -79,23 +79,26 @@ Provide contract type, jurisdiction, and party names, get back:
 `
 legal-adk-gcp/
 +-- agents/
-|   +-- agent.py          # ADK root orchestrator
-|   +-- review_agent.py   # Contract risk analysis agent
-|   +-- research_agent.py # Legal Q&A agent
-|   +-- draft_agent.py    # Document drafting agent
-|   +-- tools.py          # Shared tool functions (analyze_contract, legal_research, draft_document)
-|   +-- schemas.py        # Pydantic output types
-|   +-- rag.py            # Vertex AI Search query helper
+|   +-- agent.py                   # ADK root orchestrator
+|   +-- review_agent.py            # Contract risk analysis agent
+|   +-- research_agent.py          # Legal Q&A agent
+|   +-- draft_agent.py             # Document drafting agent
+|   +-- tools.py                   # analyze_contract, legal_research, draft_document
+|   +-- schemas.py                 # Pydantic output types
+|   +-- rag.py                     # Vertex AI Search query helper
 +-- corpus/
-|   +-- ingest_courtlistener.py  # CourtListener scraper
-|   +-- index_corpus.py          # GCS to Vertex AI Search pipeline
+|   +-- ingest_courtlistener.py    # CourtListener ingestion pipeline
+|   +-- index_corpus.py            # GCS to Vertex AI Search indexer
 +-- dlp/
-|   +-- tokenizer.py      # Cloud DLP PII tokenization
+|   +-- tokenizer.py               # Cloud DLP PII tokenization
 +-- api/
-|   +-- main.py           # FastAPI: /review, /draft, /research
+|   +-- main.py                    # FastAPI: /health /review /research /draft
++-- docs/
+|   +-- technical-qa.md            # In-depth technical Q&A
 +-- config.py
 +-- requirements.txt
 +-- Dockerfile
++-- architecture_legal.svg         # System architecture diagram
 `
 
 ---
