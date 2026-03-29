@@ -61,67 +61,6 @@ Provide contract type, jurisdiction, and party names, get back:
 
 ---
 
-## Quickstart
-
-### Prerequisites
-- Python 3.12
-- GCP project with billing enabled
-- CourtListener API token (free at courtlistener.com/profile/api-token/)
-- Google AI Studio API key (free at aistudio.google.com/apikey)
-
-### 1. Clone and configure
-`powershell
-git clone https://github.com/gbhorne/legal-adk-gcp
-cd legal-adk-gcp
-copy .env.example .env
-# Edit .env: set COURTLISTENER_TOKEN and GOOGLE_API_KEY
-`
-
-### 2. Install dependencies
-`powershell
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-`
-
-### 3. Seed the corpus (Georgia only for first run)
-`powershell
-python corpus/ingest_courtlistener.py --court ga --max 500
-python corpus/index_corpus.py --prefix courtlistener/
-`
-
-### 4. Run the API
-`powershell
-set GOOGLE_GENAI_USE_VERTEXAI=false
-python api/main.py
-`
-
-### 5. Run the ADK web UI
-`powershell
-set GOOGLE_GENAI_USE_VERTEXAI=false
-adk web
-`
-
-Open http://localhost:8000 and select the agents app.
-
-### 6. Test the endpoints
-`powershell
-# Health check
-curl http://localhost:8080/health
-
-# Contract review
-curl -X POST http://localhost:8080/review \
-  -H "Content-Type: application/json" \
-  -d "{\"contract_text\": \"Employee agrees not to compete for 5 years in the US.\", \"jurisdiction\": \"Georgia\"}"
-
-# Legal research
-curl -X POST http://localhost:8080/research \
-  -H "Content-Type: application/json" \
-  -d "{\"question\": \"What is the maximum enforceable non-compete duration in Georgia?\", \"jurisdiction\": \"Georgia\"}"
-`
-
----
-
 ## GCP services used
 
 | Service | Purpose |
@@ -192,6 +131,7 @@ See the companion repo [langgraph-legal-assistant](https://github.com/gbhorne/la
 ## Experimental disclaimer
 
 This project is experimental software intended for portfolio demonstration and research purposes only. It has not been validated for production legal use. All outputs require review by a licensed attorney before use in any legal matter. Outputs from this system do not constitute legal advice and do not create an attorney-client relationship. The authors assume no liability for any use of or reliance on system outputs. This project is not affiliated with or endorsed by any bar association, law firm, or legal technology certification body.
+
 
 
 
