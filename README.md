@@ -40,7 +40,7 @@ Provide contract type, jurisdiction, and party names, get back:
 
 **Supported contract types:** NDA, Employment Agreement, Commercial Lease, Asset Purchase Agreement
 ## Architecture
-![adk-legal-assistant architecture](architecture.svg)
+![adk-legal-assistant architecture](https://raw.githubusercontent.com/gbhorne/legal-adk-gcp/main/architecture_legal.svg)
 
 **Compliance by design:**
 - Cloud DLP tokenizes PII before every LLM call
@@ -192,5 +192,7 @@ See the companion repo [langgraph-legal-assistant](https://github.com/gbhorne/la
 ## Experimental disclaimer
 
 This project is experimental software intended for portfolio demonstration and research purposes only. It has not been validated for production legal use. All outputs require review by a licensed attorney before use in any legal matter. Outputs from this system do not constitute legal advice and do not create an attorney-client relationship. The authors assume no liability for any use of or reliance on system outputs. This project is not affiliated with or endorsed by any bar association, law firm, or legal technology certification body.
+
+
 
 
