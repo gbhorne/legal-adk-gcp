@@ -116,13 +116,6 @@ See the companion repo [langgraph-legal-assistant](https://github.com/gbhorne/la
 
 ---
 
-## Related projects
-
-- [agent-finops-gcp](https://github.com/gbhorne/agent-finops-gcp) - GCP cost intelligence agent
-- [adk-supply-chain-intel](https://github.com/gbhorne/adk-supply-chain-intel) - Multi-signal disruption detection (coming Week 5)
-- [adk-benefits-intake](https://github.com/gbhorne/adk-benefits-intake) - Government benefits document AI (coming Week 9)
-
----
 
 *Built by Gregory Horne - Cloud Architect and GCP AI/ML Platform Engineer*
 
