@@ -19,7 +19,7 @@ class Config:
     )
     COURTLISTENER_TOKEN:     str  = os.getenv("COURTLISTENER_TOKEN",           "")
     COURTLISTENER_BASE_URL:  str  = os.getenv("COURTLISTENER_BASE_URL",        "https://www.courtlistener.com/api/rest/v4")
-    GEMINI_MODEL:            str  = os.getenv("GEMINI_MODEL",                  "gemini-2.0-flash-001")
+    GEMINI_MODEL:            str  = os.getenv("GEMINI_MODEL",                  "gemini-2.5-flash")
     GEMINI_LOCATION:         str  = os.getenv("GEMINI_LOCATION",               "us-central1")
     INGEST_JURISDICTIONS:    list = os.getenv("INGEST_JURISDICTIONS",          "ga").split(",")
     CHUNK_SIZE_CHARS:        int  = int(os.getenv("CHUNK_SIZE_CHARS",          "2000"))

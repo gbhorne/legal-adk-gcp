@@ -55,7 +55,9 @@ class ContractRiskReport(BaseModel):
     attorney_review_required: bool = True
     attorney_review_note:     str  = (
         "AI-generated analysis. Must be reviewed by a licensed attorney before use. "
-        "Does not constitute legal advice. ABA Model Rule 1.6 applies."
+        "Does not constitute legal advice. Attorney review and supervision obligations "
+        "apply under ABA Model Rules 1.1 (Competence) and 5.3 (Supervision). "
+        "Confidentiality controls align with Rule 1.6 considerations."
     )
 
 

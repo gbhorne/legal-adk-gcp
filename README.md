@@ -1,8 +1,8 @@
 ﻿# adk-legal-assistant
 
-Privacy-first AI legal assistant for small law firms. Contract review, document drafting, and legal research grounded in 9M+ real court opinions from CourtListener.
+Privacy-first AI legal assistant for small law firms. Contract review, document drafting, and legal research built on a pipeline sourcing from CourtListener's multi-million-opinion corpus. Current demo index uses a Georgia-focused subset of 1,010+ opinions.
 
-Built with Google ADK, Vertex AI Search, Gemini 2.5, Cloud DLP, and Cloud Run.
+Built with Google ADK, Vertex AI Search, Gemini 2.5 Flash, and Cloud Run.
 
 **Companion repo:** [langgraph-legal-assistant](https://github.com/gbhorne/langgraph-legal-assistant)
 
@@ -43,10 +43,10 @@ Provide contract type, jurisdiction, and party names, get back:
 ![adk-legal-assistant architecture](https://raw.githubusercontent.com/gbhorne/legal-adk-gcp/main/architecture_legal.svg)
 
 **Compliance by design:**
-- Cloud DLP tokenizes PII before every LLM call
-- Per-firm GCS bucket isolation (client documents never enter shared corpus)
-- VPC-SC perimeter in production
-- Every output includes hardcoded attorney review requirement (ABA Rule 1.6)
+- Local PII tokenization layer (email, phone, SSN) before every LLM call; Cloud DLP integration planned for production hardening
+- Per-firm GCS bucket isolation with CMEK planned for production; current build uses a shared corpus of public court opinions only
+- VPC-SC perimeter targeted for production deployment; not provisioned in this experimental build
+- Every output includes hardcoded attorney review requirement under ABA Model Rules 1.1 (Competence) and 5.3 (Supervision); confidentiality controls align with Rule 1.6
 
 ---
 
@@ -54,10 +54,8 @@ Provide contract type, jurisdiction, and party names, get back:
 
 | Source | Coverage | Access |
 |--------|----------|--------|
-| CourtListener REST API | 9M+ opinions, 471 jurisdictions | Free token |
-| Harvard Caselaw Access Project | All official US case law through 2020 | Bulk CC license |
-| ABA Model Rules | Professional conduct by state | Public web |
-| Clause library (this repo) | Templates by contract type + jurisdiction | JSON files |
+| CourtListener REST API | 9M+ opinions, 471 jurisdictions (pipeline); 1,010+ Georgia opinions in current demo index | Free token |
+| Contract templates (in-code) | NDA, Employment Agreement, Commercial Lease, Asset Purchase Agreement | tools.py CONTRACT_TEMPLATES |
 
 ---
 
@@ -65,13 +63,13 @@ Provide contract type, jurisdiction, and party names, get back:
 
 | Service | Purpose |
 |---------|---------|
-| Cloud Run | FastAPI API + nightly ingestion job |
-| Vertex AI Search | RAG corpus - case law + clause library |
+| Cloud Run | FastAPI API host; ingestion job deployment target |
+| Vertex AI Search | RAG corpus: case law retrieval |
 | Gemini 2.5 Flash | Clause classification, risk rating, drafting |
-| Cloud DLP | PII tokenization before LLM calls |
+| Cloud DLP | Planned for production PII tokenization; local regex tokenization used in current build |
 | GCS | Raw opinions + processed corpus |
 | Secret Manager | CourtListener API token |
-| Cloud Scheduler | Nightly corpus update |
+| Cloud Scheduler | Planned for nightly corpus update; not configured in current build |
 
 ---
 
@@ -91,30 +89,7 @@ legal-adk-gcp/
 |   +-- ingest_courtlistener.py    # CourtListener ingestion pipeline
 |   +-- index_corpus.py            # GCS to Vertex AI Search indexer
 +-- dlp/
-|   +-- tokenizer.py               # Cloud DLP PII tokenization
-+-- api/
-|   +-- main.py                    # FastAPI: /health /review /research /draft
-+-- docs/
-|   +-- technical-qa.md            # In-depth technical Q&A
-+-- config.py
-+-- requirements.txt
-+-- Dockerfile
-+-- architecture_legal.svg         # System architecture diagram
-`
-legal-adk-gcp/
-+-- agents/
-|   +-- agent.py                   # ADK root orchestrator
-|   +-- review_agent.py            # Contract risk analysis agent
-|   +-- research_agent.py          # Legal Q&A agent
-|   +-- draft_agent.py             # Document drafting agent
-|   +-- tools.py                   # analyze_contract, legal_research, draft_document
-|   +-- schemas.py                 # Pydantic output types
-|   +-- rag.py                     # Vertex AI Search query helper
-+-- corpus/
-|   +-- ingest_courtlistener.py    # CourtListener ingestion pipeline
-|   +-- index_corpus.py            # GCS to Vertex AI Search indexer
-+-- dlp/
-|   +-- tokenizer.py               # Cloud DLP PII tokenization
+|   +-- tokenizer.py               # Local regex PII tokenization
 +-- api/
 |   +-- main.py                    # FastAPI: /health /review /research /draft
 +-- docs/
@@ -136,7 +111,7 @@ See the companion repo [langgraph-legal-assistant](https://github.com/gbhorne/la
 | Agent definition | Declarative (Agent + FunctionTool) | Explicit StateGraph nodes |
 | Multi-agent routing | Built-in sub_agents | Manual conditional edges |
 | Debugging | ADK web UI with trace panel | LangGraph Studio |
-| Gemini integration | Native | Via langchain-google-vertexai |
+| Gemini integration | Native google-genai | Via langchain-google-genai |
 | Best for | GCP-native production deployments | Complex branching, research |
 
 ---

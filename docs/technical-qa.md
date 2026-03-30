@@ -8,11 +8,11 @@
 
 **Q: What is the overall architecture of this system?**
 
-The system is a multi-agent pipeline built on Google ADK 1.28. A root orchestrator agent (legal_orchestrator) receives all requests and routes them to one of three specialist agents: ReviewAgent for contract analysis, ResearchAgent for legal Q&A, and DraftAgent for document generation. Each specialist agent has one registered FunctionTool that performs the actual work. Before any contract text reaches the LLM, Cloud DLP tokenizes all personally identifiable information. Vertex AI Search provides the RAG layer, and Gemini 2.5 Flash handles all generation tasks. FastAPI exposes the agents as REST endpoints deployable to Cloud Run.
+The system is a multi-agent pipeline built on Google ADK 1.28. A root orchestrator agent (legal_orchestrator) receives all requests and routes them to one of three specialist agents: ReviewAgent for contract analysis, ResearchAgent for legal Q&A, and DraftAgent for document generation. Each specialist agent has one registered FunctionTool that performs the actual work. Before any contract text reaches the LLM, a local regex tokenization layer replaces PII patterns (email, phone, SSN) with reversible surrogate tokens. Vertex AI Search provides the RAG layer, and Gemini 2.5 Flash handles all generation tasks. FastAPI exposes the agents as REST endpoints deployable to Cloud Run.
 
 **Q: Why use Google ADK instead of LangChain or a direct API integration?**
 
-ADK provides native multi-agent orchestration with automatic tool-calling loops, session management, and sub-agent routing. The declarative Agent definition with FunctionTool wrapping is significantly less boilerplate than building an equivalent LangChain pipeline. ADK also ships a web UI with a full trace panel showing every tool call, LLM invocation, and agent transfer -- which is useful for debugging and for demonstrating the system's decision path during reviews. That said, ADK is newer and less battle-tested than LangChain. The companion LangGraph repo exists specifically to compare the two approaches for this same use case.
+ADK provides native multi-agent orchestration with automatic tool-calling loops, session management, and sub-agent routing. The declarative Agent definition with FunctionTool wrapping is significantly less boilerplate than building an equivalent LangChain pipeline. ADK also ships a web UI with a full trace panel showing every tool call, LLM invocation, and agent transfer, which is useful for debugging and for demonstrating the system's decision path during reviews. That said, ADK is newer and less battle-tested than LangChain. The companion LangGraph repo exists specifically to compare the two approaches for this same use case.
 
 **Q: How does the orchestrator decide which agent to route a request to?**
 
@@ -20,7 +20,7 @@ The root orchestrator is an ADK Agent with a system instruction that describes t
 
 **Q: What is the role of agents/tools.py vs the individual agent files?**
 
-tools.py contains all the actual business logic: the three core functions (analyze_contract, legal_research, draft_document) that do the real work. The individual agent files (review_agent.py, research_agent.py, draft_agent.py) contain only the ADK Agent definition -- the model name, description, instruction, and the FunctionTool wrapping that function. This separation means the core logic can be tested independently of the ADK framework, and the same tool function could theoretically be wrapped by a different agent framework without modification.
+tools.py contains all the actual business logic: the three core functions (analyze_contract, legal_research, draft_document) that do the real work. The individual agent files (review_agent.py, research_agent.py, draft_agent.py) contain only the ADK Agent definition: the model name, description, instruction, and the FunctionTool wrapping that function. This separation means the core logic can be tested independently of the ADK framework, and the same tool function could theoretically be wrapped by a different agent framework without modification.
 
 ---
 
@@ -28,7 +28,7 @@ tools.py contains all the actual business logic: the three core functions (analy
 
 **Q: Where does the case law come from?**
 
-The corpus uses the CourtListener REST API maintained by the Free Law Project, a nonprofit. CourtListener indexes 9 million+ court opinions from 471 jurisdictions, updated daily, and provides free API access with token authentication. The initial corpus for this project is 1,010 Georgia Supreme Court and Court of Appeals opinions filed between 2024 and 2025 -- chosen because they postdate most LLM training cutoffs, making them a genuine retrieval contribution rather than something Gemini already knows.
+The corpus uses the CourtListener REST API maintained by the Free Law Project, a nonprofit. CourtListener indexes 9 million+ court opinions from 471 jurisdictions, updated daily, and provides free API access with token authentication. The initial corpus for this project is 1,010+ Georgia Supreme Court and Court of Appeals opinions filed between 2024 and 2025, chosen because they postdate most LLM training cutoffs, making them a genuine retrieval contribution rather than something Gemini already knows. The ingestion pipeline supports additional jurisdictions and larger pulls; the Georgia subset reflects the scope of this portfolio build.
 
 **Q: How are opinions ingested and indexed?**
 
@@ -36,7 +36,7 @@ corpus/ingest_courtlistener.py queries the CourtListener API for opinions by cou
 
 **Q: How does Vertex AI Search handle the retrieval?**
 
-Vertex AI Search uses a structured data datastore. Each document in the index is a court opinion chunk with a text field and metadata fields. When an agent calls query_corpus(), the RAG helper sends the query to the search serving config endpoint and retrieves the top-k results ranked by relevance. The retrieved documents -- with case name, citation, court, date, and text snippet -- are assembled into a context block and passed to Gemini as grounded source material. Gemini is explicitly instructed to only cite cases that appear in the retrieved context.
+Vertex AI Search uses a structured data datastore. Each document in the index is a court opinion chunk with a text field and metadata fields. When an agent calls query_corpus(), the RAG helper sends the query to the search serving config endpoint and retrieves the top-k results ranked by relevance. The retrieved documents (case name, citation, court, date, and text snippet) are assembled into a context block and passed to Gemini as grounded source material. Gemini is explicitly instructed to only cite cases that appear in the retrieved context.
 
 **Q: Why are the text snippets short in the current corpus?**
 
@@ -50,21 +50,25 @@ Yes. The COURT_IDS map in ingest_courtlistener.py already has entries for tex (T
 
 ## Privacy and Compliance
 
-**Q: How does Cloud DLP tokenization work?**
+**Q: How does PII tokenization work?**
 
-When contract text enters the system, dlp/tokenizer.py calls the Cloud DLP API to inspect the text for PII using a set of infoTypes: PERSON_NAME, EMAIL_ADDRESS, PHONE_NUMBER, US_SOCIAL_SECURITY_NUMBER, US_INDIVIDUAL_TAXPAYER_IDENTIFICATION_NUMBER, CREDIT_CARD_NUMBER, and STREET_ADDRESS. DLP replaces each detected value with a reversible surrogate token like [PERSON_NAME_1] or [EMAIL_ADDRESS_2]. The token-to-original mapping is stored in the tokenization context object. After the LLM returns its analysis, detokenize() replaces all tokens in the output with the original values. The LLM sees only tokenized text at every point in the pipeline.
+When contract text enters the system, dlp/tokenizer.py applies local regex patterns to detect and replace three PII types: EMAIL_ADDRESS, PHONE_NUMBER, and US_SSN. Each detected value is replaced with a reversible surrogate token like [EMAIL_ADDRESS_1] or [US_SSN_2]. The token-to-original mapping is stored in a TokenizationContext object. After the LLM returns its analysis, detokenize() replaces all tokens in the output with the original values. The LLM sees only tokenized text at every point in the pipeline.
+
+This is a local implementation, not a Cloud DLP API call. The google-cloud-dlp package is included in requirements.txt as a dependency for future production hardening. A full Cloud DLP integration would expand coverage to additional infoTypes (PERSON_NAME, STREET_ADDRESS, CREDIT_CARD_NUMBER, and others), use Google-managed detection models, and provide an audit trail of inspections. That upgrade path is documented but not implemented in the current experimental build.
 
 **Q: What is the attorney review requirement and why is it hardcoded?**
 
-Every output schema (ContractRiskReport, LegalResearchMemo, DraftedDocument) in agents/schemas.py has a field attorney_review_required: bool = True and attorney_review_note: str with a fixed value that cannot be overridden. This is intentional. Most legal AI tools put a disclaimer in the UI footer or in the system prompt, both of which can be ignored or overridden. By making it a structural property of the output type, the requirement appears in every API response, every ADK web UI response, and every test. It cannot be stripped by changing a prompt.
+Every output schema (ContractRiskReport, LegalResearchMemo, DraftedDocument) in agents/schemas.py has a field attorney_review_required: bool = True and a fixed attorney_review_note that cannot be overridden. This is intentional. Most legal AI tools put a disclaimer in the UI footer or in the system prompt, both of which can be ignored or overridden. By making it a structural property of the output type, the requirement appears in every API response, every ADK web UI response, and every test.
+
+The review and supervision obligation is grounded in ABA Model Rule 1.1 (Competence), which requires attorneys to maintain competence when using technology, and Rule 5.3 (Supervision of Nonlawyers), which addresses attorney responsibility for work product produced with non-lawyer assistance including AI tools. Rule 1.6 (Confidentiality) is the anchor for the DLP and data isolation controls, not the review requirement. The attorney_review_note in ContractRiskReport reflects this distinction.
 
 **Q: Does this system comply with ABA Model Rule 1.6?**
 
-This is an experimental system and has not been reviewed by legal ethics counsel. The DLP tokenization, per-firm data isolation design, and attorney review requirement are architectural choices intended to address the confidentiality concerns that Rule 1.6 raises for cloud-based legal tools. Whether these measures are sufficient for a specific firm's obligations under Rule 1.6 and applicable state ethics rules is a question for the attorney's state bar and ethics counsel, not for this system.
+This is an experimental system and has not been reviewed by legal ethics counsel. The PII tokenization layer and per-firm data isolation design address confidentiality concerns relevant to Rule 1.6. The attorney review requirement and supervision framing address competence and supervision obligations under Rules 1.1 and 5.3. Whether these measures are sufficient for a specific firm's obligations under Rule 1.6 and applicable state ethics rules is a question for the attorney's state bar and ethics counsel, not for this system.
 
 **Q: What is per-firm data isolation and is it implemented here?**
 
-The architecture design calls for each law firm to receive a dedicated GCS bucket with CMEK encryption using a firm-specific KMS key, plus a dedicated Vertex AI Search datastore for their client documents. This means two firms' data never coexist in the same storage resource. In the current implementation there is one shared corpus (public court opinions only -- no client documents) and one datastore. The per-firm isolation architecture is documented and designed but not provisioned in this experimental build, because the corpus contains only public court opinions that carry no confidentiality obligation.
+The architecture design calls for each law firm to receive a dedicated GCS bucket with CMEK encryption using a firm-specific KMS key, plus a dedicated Vertex AI Search datastore for their client documents. This means two firms' data never coexist in the same storage resource. In the current implementation there is one shared corpus (public court opinions only, no client documents) and one datastore. The per-firm isolation architecture is documented and designed but not provisioned in this experimental build, because the corpus contains only public court opinions that carry no confidentiality obligation.
 
 ---
 
@@ -76,7 +80,7 @@ First, it tokenizes the contract text through Cloud DLP. Second, it sends a prom
 
 **Q: How does the system avoid hallucinated citations?**
 
-The risk rating prompt explicitly instructs Gemini to only cite cases that appear in the retrieved context block. The retrieved cases are passed with their case name, citation, court, and date. The tool then assembles the citations list directly from the RAG results -- not from the LLM output. Even if Gemini references a case in its analysis text, the structured citations in the output come from what Vertex AI Search actually returned. This two-track approach (LLM for prose analysis, RAG results for structured citations) is the core anti-hallucination mechanism.
+The risk rating prompt explicitly instructs Gemini to only cite cases that appear in the retrieved context block. The retrieved cases are passed with their case name, citation, court, and date. The tool then assembles the citations list directly from the RAG results, not from the LLM output. Even if Gemini references a case in its analysis text, the structured citations in the output come from what Vertex AI Search actually returned. This two-track approach (LLM for prose analysis, RAG results for structured citations) is the core anti-hallucination mechanism.
 
 **Q: What contract types does the DraftAgent support?**
 
@@ -88,7 +92,7 @@ This was a real issue encountered during development. Gemini 2.5 Flash occasiona
 
 **Q: Why does the API layer call the tool functions directly rather than going through the ADK agents?**
 
-The FastAPI endpoints in api/main.py call analyze_contract(), legal_research(), and draft_document() directly from tools.py. This is intentional for the REST API path. The ADK agent layer adds conversation management, session state, and multi-turn routing on top of the tool functions -- capabilities that are valuable in the interactive ADK web UI but unnecessary for a stateless REST API call. Using the tool functions directly gives the API a simpler, faster execution path without the overhead of ADK session management.
+The FastAPI endpoints in api/main.py call analyze_contract(), legal_research(), and draft_document() directly from tools.py. This is intentional for the REST API path. The ADK agent layer adds conversation management, session state, and multi-turn routing on top of the tool functions: capabilities that are valuable in the interactive ADK web UI but unnecessary for a stateless REST API call. Using the tool functions directly gives the API a simpler, faster execution path without the overhead of ADK session management.
 
 ---
 
@@ -96,7 +100,7 @@ The FastAPI endpoints in api/main.py call analyze_contract(), legal_research(), 
 
 **Q: What GCP services does this project use and what are the cost implications?**
 
-The services used are: Cloud Storage (pennies per GB per month for corpus storage), Vertex AI Search (query cost plus index storage, roughly $2.50 per 1,000 queries for the custom search tier), Gemini 2.5 Flash via Google AI Studio API key (token-based pricing, approximately $0.15 per million input tokens and $0.60 per million output tokens as of March 2026), Cloud DLP (per-character pricing for inspect requests), Cloud Run (per-invocation pricing, negligible at low volume), and Secret Manager (minimal). For a portfolio project running occasional demos, total GCP spend is under $5/month. For a production small firm deployment handling 50 contracts per month, estimated cost is $20-50/month depending on contract length and query volume.
+The services used are: Cloud Storage (pennies per GB per month for corpus storage), Vertex AI Search (query cost plus index storage, roughly $2.50 per 1,000 queries for the custom search tier), Gemini 2.5 Flash via Google AI Studio API key (token-based pricing, approximately $0.15 per million input tokens and $0.60 per million output tokens as of March 2026), Cloud DLP (planned for production; not incurring costs in current build), Cloud Run (per-invocation pricing, negligible at low volume), and Secret Manager (minimal). For a portfolio project running occasional demos, total GCP spend is under $5/month. For a production small firm deployment handling 50 contracts per month, estimated cost is $20-50/month depending on contract length and query volume.
 
 **Q: How is the Google API key managed?**
 
