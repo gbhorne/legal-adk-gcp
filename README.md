@@ -85,20 +85,18 @@ legal-adk-gcp/
 │   ├── tools.py                   # analyze_contract, legal_research, draft_document
 │   ├── schemas.py                 # Pydantic output types
 │   └── rag.py                     # Vertex AI Search query helper
-├── corpus/
-│   ├── ingest_courtlistener.py    # CourtListener ingestion pipeline
-│   └── index_corpus.py            # GCS to Vertex AI Search indexer
 ├── dlp/
 │   └── tokenizer.py               # Cloud DLP PII tokenization with local regex fallback
 ├── api/
 │   └── main.py                    # FastAPI: /health /review /research /draft
 ├── docs/
 │   └── technical-qa.md            # In-depth technical Q&A
-├── config.py
 ├── requirements.txt
 ├── Dockerfile
 └── architecture_legal.svg         # System architecture diagram
 ```
+
+> Infrastructure config, corpus ingestion scripts, and environment files are not included in this public repo. The architecture and agent design are fully documented above and in `docs/technical-qa.md`.
 
 ---
 
