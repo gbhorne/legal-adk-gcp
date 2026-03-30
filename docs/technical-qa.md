@@ -8,7 +8,7 @@
 
 **Q: What is the overall architecture of this system?**
 
-The system is a multi-agent pipeline built on Google ADK 1.28. A root orchestrator agent (legal_orchestrator) receives all requests and routes them to one of three specialist agents: ReviewAgent for contract analysis, ResearchAgent for legal Q&A, and DraftAgent for document generation. Each specialist agent has one registered FunctionTool that performs the actual work. Before any contract text reaches the LLM, a local regex tokenization layer replaces PII patterns (email, phone, SSN) with reversible surrogate tokens. Vertex AI Search provides the RAG layer, and Gemini 2.5 Flash handles all generation tasks. FastAPI exposes the agents as REST endpoints deployable to Cloud Run.
+The system is a multi-agent pipeline built on Google ADK 1.28. A root orchestrator agent (legal_orchestrator) receives all requests and routes them to one of three specialist agents: ReviewAgent for contract analysis, ResearchAgent for legal Q&A, and DraftAgent for document generation. Each specialist agent has one registered FunctionTool that performs the actual work. Before any contract text reaches the LLM, a local regex tokenization layer replaces PII patterns (email, phone, SSN) with reversible surrogate tokens. Vertex AI Search provides the RAG layer, and Gemini 2.5 Flash handles all generation tasks. FastAPI exposes the underlying tool functions as REST endpoints deployable to Cloud Run; the ADK agent definitions are used separately for agent-orchestrated sessions and UI tracing via the ADK web interface.
 
 **Q: Why use Google ADK instead of LangChain or a direct API integration?**
 
@@ -100,7 +100,7 @@ The FastAPI endpoints in api/main.py call analyze_contract(), legal_research(), 
 
 **Q: What GCP services does this project use and what are the cost implications?**
 
-The services used are: Cloud Storage (pennies per GB per month for corpus storage), Vertex AI Search (query cost plus index storage, roughly $2.50 per 1,000 queries for the custom search tier), Gemini 2.5 Flash via Google AI Studio API key (token-based pricing, approximately $0.15 per million input tokens and $0.60 per million output tokens as of March 2026), Cloud DLP (planned for production; not incurring costs in current build), Cloud Run (per-invocation pricing, negligible at low volume), and Secret Manager (minimal). For a portfolio project running occasional demos, total GCP spend is under $5/month. For a production small firm deployment handling 50 contracts per month, estimated cost is $20-50/month depending on contract length and query volume.
+The services used are: Cloud Storage (pennies per GB per month for corpus storage), Vertex AI Search (query cost plus index storage, roughly $2.50 per 1,000 queries for the custom search tier), Gemini 2.5 Flash via Google AI Studio API key (token-based pricing, approximately $0.15 per million input tokens and $1.25 per million output tokens as of March 2026), Cloud DLP (planned for production; not incurring costs in current build), Cloud Run (per-invocation pricing, negligible at low volume), and Secret Manager (minimal). For a portfolio project running occasional demos, total GCP spend is under $5/month. For a production small firm deployment handling 50 contracts per month, estimated cost is $20-50/month depending on contract length and query volume.
 
 **Q: How is the Google API key managed?**
 
