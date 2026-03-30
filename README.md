@@ -43,7 +43,7 @@ Provide contract type, jurisdiction, and party names, get back:
 ![adk-legal-assistant architecture](https://raw.githubusercontent.com/gbhorne/legal-adk-gcp/main/architecture_legal.svg)
 
 **Compliance by design:**
-- Local PII tokenization layer (email, phone, SSN) before every LLM call; Cloud DLP integration planned for production hardening
+- Cloud DLP inspect API tokenizes seven PII infoTypes (PERSON_NAME, EMAIL_ADDRESS, PHONE_NUMBER, SSN, ITIN, CREDIT_CARD_NUMBER, STREET_ADDRESS) before every LLM call; local regex fallback if API is unavailable
 - Per-firm GCS bucket isolation with CMEK planned for production; current build uses a shared corpus of public court opinions only
 - VPC-SC perimeter targeted for production deployment; not provisioned in this experimental build
 - Every output includes hardcoded attorney review requirement under ABA Model Rules 1.1 (Competence) and 5.3 (Supervision); confidentiality controls align with Rule 1.6
@@ -66,7 +66,7 @@ Provide contract type, jurisdiction, and party names, get back:
 | Cloud Run | FastAPI API host; ingestion job deployment target |
 | Vertex AI Search | RAG corpus: case law retrieval |
 | Gemini 2.5 Flash | Clause classification, risk rating, drafting |
-| Cloud DLP | Planned for production PII tokenization; local regex tokenization used in current build |
+| Cloud DLP | PII tokenization before every LLM call; seven infoTypes; local regex fallback |
 | GCS | Raw opinions + processed corpus |
 | Secret Manager | CourtListener API token |
 | Cloud Scheduler | Planned for nightly corpus update; not configured in current build |
@@ -89,7 +89,7 @@ legal-adk-gcp/
 │   ├── ingest_courtlistener.py    # CourtListener ingestion pipeline
 │   └── index_corpus.py            # GCS to Vertex AI Search indexer
 ├── dlp/
-│   └── tokenizer.py               # Local regex PII tokenization
+│   └── tokenizer.py               # Cloud DLP PII tokenization with local regex fallback
 ├── api/
 │   └── main.py                    # FastAPI: /health /review /research /draft
 ├── docs/
