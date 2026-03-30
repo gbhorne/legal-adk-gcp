@@ -39,8 +39,15 @@ Provide contract type, jurisdiction, and party names, get back:
 - List of items requiring attorney review before use
 
 **Supported contract types:** NDA, Employment Agreement, Commercial Lease, Asset Purchase Agreement
+
+### Contract review output
+![High-risk clause output with case citations](docs/screenshots/adk-02-high-risk-clauses-output.png)
+
 ## Architecture
 ![adk-legal-assistant architecture](https://raw.githubusercontent.com/gbhorne/legal-adk-gcp/main/architecture_legal.svg)
+
+### Orchestrator routing
+![ADK orchestrator routing request to specialist agent](docs/screenshots/adk-01-orchestrator-routing.png)
 
 **Compliance by design:**
 - Cloud DLP inspect API tokenizes seven PII infoTypes (PERSON_NAME, EMAIL_ADDRESS, PHONE_NUMBER, SSN, ITIN, CREDIT_CARD_NUMBER, STREET_ADDRESS) before every LLM call; local regex fallback if API is unavailable
@@ -111,6 +118,9 @@ See the companion repo [langgraph-legal-assistant](https://github.com/gbhorne/la
 | Debugging | ADK web UI with trace panel | LangGraph Studio |
 | Gemini integration | Native google-genai | Via langchain-google-genai |
 | Best for | GCP-native production deployments | Complex branching, research |
+
+### ADK trace panel
+![ADK trace panel invocation waterfall](docs/screenshots/adk-05-trace-panel-invocation-waterfall.png)
 
 ---
 
