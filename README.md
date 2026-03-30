@@ -75,7 +75,7 @@ Provide contract type, jurisdiction, and party names, get back:
 
 ## Project structure
 
-`
+```
 legal-adk-gcp/
 +-- agents/
 |   +-- agent.py                   # ADK root orchestrator
@@ -98,7 +98,7 @@ legal-adk-gcp/
 +-- requirements.txt
 +-- Dockerfile
 +-- architecture_legal.svg         # System architecture diagram
-`
+```
 
 ---
 
